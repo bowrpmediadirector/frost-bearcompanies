@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BOWPR & Purple Paws Dashboard</title>
+    <style>
+      :root { color-scheme: dark; }
+      body { font-family: Inter, Arial, sans-serif; margin: 0; background: #0f1226; color: #fff; }
+      header { padding: 20px; background: #1b2147; }
+      main { padding: 20px; display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+      section { background: #21295c; border-radius: 10px; padding: 16px; }
+      .value { font-size: 1.7rem; font-weight: 700; }
+      .wide { grid-column: 1 / -1; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; }
+      input, select, button { background: #0f1437; color: #fff; border: 1px solid #4d578f; border-radius: 6px; padding: 8px; }
+      button { cursor: pointer; }
+      pre { white-space: pre-wrap; background: #111633; padding: 10px; border-radius: 6px; min-height: 48px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>BOWPR + Purple Paws Bot Dashboard</h1>
+      <p>Manage applications, YT/Twitch notifications, and your built-in CAD system.</p>
+    </header>
+    <main>
+      <section><div>Tickets</div><div id="tickets" class="value">-</div></section>
+      <section><div>Applications</div><div id="applications" class="value">-</div></section>
+      <section><div>Notifications</div><div id="notifications" class="value">-</div></section>
+      <section><div>Active CAD Calls</div><div id="cadCalls" class="value">-</div></section>
+      <section><div>Guilds Configured</div><div id="guilds" class="value">-</div></section>
+
+      <section class="wide">
+        <h3>Add Application (Dashboard)</h3>
+        <div class="row">
+          <input id="guildId" placeholder="Guild ID" />
+          <input id="applicantTag" placeholder="Applicant tag (e.g. User#1234)" />
+          <button id="addApplication">Add Application</button>
+        </div>
+        <pre id="appOut"></pre>
+      </section>
+
+      <section class="wide">
+        <h3>Add YT/Twitch Notification</h3>
+        <div class="row">
+          <select id="platform"><option value="youtube">YouTube</option><option value="twitch">Twitch</option></select>
+          <input id="source" placeholder="Channel ID or Twitch username" />
+          <input id="discordChannelId" placeholder="Discord Channel ID" />
+          <button id="addNotification">Add Notification</button>
+        </div>
+        <pre id="notifyOut"></pre>
+      </section>
+
+      <section class="wide">
+        <h3>Create CAD Call</h3>
+        <div class="row">
+          <input id="cadTitle" placeholder="Call title" />
+          <input id="cadLocation" placeholder="Location" />
+          <select id="cadPriority"><option>low</option><option selected>medium</option><option>high</option><option>critical</option></select>
+          <button id="createCad">Create CAD Call</button>
+        </div>
+        <pre id="cadOut"></pre>
+      </section>
+    </main>
+
+    <script>
+      const secret = localStorage.getItem('dashboardSecret') || prompt('Dashboard secret (DASHBOARD_SECRET):');
+      localStorage.setItem('dashboardSecret', secret || '');
+
+      const j = (id) => document.getElementById(id);
+
+      fetch('/api/stats')
+        .then((res) => res.json())
+        .then((stats) => {
+          for (const [key, value] of Object.entries(stats)) {
+            const el = j(key);
+            if (el) el.textContent = value;
+          }
+        });
+
+      j('addApplication').onclick = async () => {
+        const payload = { applicantTag: j('applicantTag').value };
+        const guildId = j('guildId').value;
+        const res = await fetch(`/api/applications/${guildId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': secret },
+          body: JSON.stringify(payload)
+        });
+        j('appOut').textContent = JSON.stringify(await res.json(), null, 2);
+      };
+
+      j('addNotification').onclick = async () => {
+        const guildId = j('guildId').value;
+        const payload = {
+          platform: j('platform').value,
+          source: j('source').value,
+          discordChannelId: j('discordChannelId').value
+        };
+        const res = await fetch(`/api/notifications/${guildId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': secret },
+          body: JSON.stringify(payload)
+        });
+        j('notifyOut').textContent = JSON.stringify(await res.json(), null, 2);
+      };
+
+      j('createCad').onclick = async () => {
+        const guildId = j('guildId').value;
+        const payload = {
+          title: j('cadTitle').value,
+          location: j('cadLocation').value,
+          priority: j('cadPriority').value
+        };
+        const res = await fetch(`/api/cad/${guildId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': secret },
+          body: JSON.stringify(payload)
+        });
+        j('cadOut').textContent = JSON.stringify(await res.json(), null, 2);
+      };
+    </script>
+  </body>
+</html>
