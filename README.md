@@ -4,12 +4,14 @@ A starter Discord bot tailored for **BOWPR** and **Purple Paws** with:
 
 - Admin commands
 - Ticket system
-- Application system
+- Application system (Discord + dashboard entry)
 - Music queue controls
 - RP commands
 - Fun commands
 - Quality-of-life utilities
 - Configuration controls
+- YouTube/Twitch notifications
+- Built-in CAD system
 - Lightweight web dashboard
 
 ## Quick start
@@ -23,13 +25,13 @@ A starter Discord bot tailored for **BOWPR** and **Purple Paws** with:
    cp .env.example .env
    ```
 3. Fill in your bot token and IDs.
-4. Run the bot:
+4. Register slash commands:
+   ```bash
+   node src/deploy-commands.js
+   ```
+5. Run the bot:
    ```bash
    npm start
-   ```
-5. Run dashboard (optional):
-   ```bash
-   npm run dashboard
    ```
 
 ## Command categories
@@ -42,8 +44,17 @@ A starter Discord bot tailored for **BOWPR** and **Purple Paws** with:
 - `/fun coinflip`, `/fun 8ball`
 - `/qol remind`, `/qol poll`
 - `/config setprefix`, `/config logchannel`
+- `/notify add`, `/notify remove`, `/notify list`
+- `/cad create`, `/cad status`, `/cad note`, `/cad list`
+
+## Dashboard capabilities
+
+- Shows live counts for tickets, applications, notifications, active CAD calls, and configured guilds.
+- Adds applications directly from the dashboard.
+- Adds YouTube/Twitch notification feeds.
+- Creates CAD calls and returns result payloads for staff workflows.
 
 ## Notes
 
-- This is a production-minded scaffold: wire your preferred music backend (Lavalink/yt-dlp service), persistent storage, and permission model before public deployment.
-- Dashboard uses simple secret-token auth for initial setup.
+- Music and stream notification delivery are scaffolded with storage + management commands; connect your playback and polling/webhook workers for production delivery.
+- Dashboard uses secret-token header auth (`x-dashboard-secret`) for setup and admin actions.

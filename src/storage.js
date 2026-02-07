@@ -4,7 +4,9 @@ const defaultData = {
   guilds: {},
   tickets: [],
   applications: [],
-  reminders: []
+  reminders: [],
+  notifications: [],
+  cadCalls: []
 };
 
 export const db = await JSONFilePreset('data.json', defaultData);
@@ -15,7 +17,8 @@ export function guildConfig(guildId) {
       prefix: '!',
       logChannelId: null,
       ticketChannelId: null,
-      applicationChannelId: null
+      applicationChannelId: null,
+      notificationChannelId: null
     };
   }
 

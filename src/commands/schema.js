@@ -49,5 +49,48 @@ export const commands = [
     .setName('config')
     .setDescription('Server configuration')
     .addSubcommand((sc) => sc.setName('setprefix').setDescription('Set text-command prefix').addStringOption((o) => o.setName('prefix').setDescription('Prefix').setRequired(true)))
-    .addSubcommand((sc) => sc.setName('logchannel').setDescription('Set moderation log channel').addChannelOption((o) => o.setName('channel').setDescription('Log channel').setRequired(true)))
+    .addSubcommand((sc) => sc.setName('logchannel').setDescription('Set moderation log channel').addChannelOption((o) => o.setName('channel').setDescription('Log channel').setRequired(true))),
+
+  new SlashCommandBuilder()
+    .setName('notify')
+    .setDescription('YT/Twitch notification settings')
+    .addSubcommand((sc) => sc.setName('add').setDescription('Add a notification feed')
+      .addStringOption((o) => o.setName('platform').setDescription('youtube or twitch').setRequired(true).addChoices(
+        { name: 'youtube', value: 'youtube' },
+        { name: 'twitch', value: 'twitch' }
+      ))
+      .addStringOption((o) => o.setName('source').setDescription('YouTube channel ID or Twitch username').setRequired(true))
+      .addChannelOption((o) => o.setName('channel').setDescription('Discord channel for alerts').setRequired(true)))
+    .addSubcommand((sc) => sc.setName('remove').setDescription('Remove a notification feed')
+      .addStringOption((o) => o.setName('platform').setDescription('youtube or twitch').setRequired(true).addChoices(
+        { name: 'youtube', value: 'youtube' },
+        { name: 'twitch', value: 'twitch' }
+      ))
+      .addStringOption((o) => o.setName('source').setDescription('YouTube channel ID or Twitch username').setRequired(true)))
+    .addSubcommand((sc) => sc.setName('list').setDescription('List configured notification feeds')),
+
+  new SlashCommandBuilder()
+    .setName('cad')
+    .setDescription('Built-in CAD system')
+    .addSubcommand((sc) => sc.setName('create').setDescription('Create a CAD call')
+      .addStringOption((o) => o.setName('title').setDescription('Call title').setRequired(true))
+      .addStringOption((o) => o.setName('location').setDescription('Call location').setRequired(true))
+      .addStringOption((o) => o.setName('priority').setDescription('Call priority').setRequired(true).addChoices(
+        { name: 'low', value: 'low' },
+        { name: 'medium', value: 'medium' },
+        { name: 'high', value: 'high' },
+        { name: 'critical', value: 'critical' }
+      )))
+    .addSubcommand((sc) => sc.setName('status').setDescription('Update a CAD call status')
+      .addStringOption((o) => o.setName('id').setDescription('CAD call ID').setRequired(true))
+      .addStringOption((o) => o.setName('status').setDescription('new/enroute/onscene/closed').setRequired(true).addChoices(
+        { name: 'new', value: 'new' },
+        { name: 'enroute', value: 'enroute' },
+        { name: 'onscene', value: 'onscene' },
+        { name: 'closed', value: 'closed' }
+      )))
+    .addSubcommand((sc) => sc.setName('note').setDescription('Add note to CAD call')
+      .addStringOption((o) => o.setName('id').setDescription('CAD call ID').setRequired(true))
+      .addStringOption((o) => o.setName('note').setDescription('Note text').setRequired(true)))
+    .addSubcommand((sc) => sc.setName('list').setDescription('List active CAD calls'))
 ].map((c) => c.toJSON());

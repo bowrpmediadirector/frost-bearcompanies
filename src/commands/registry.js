@@ -2,6 +2,10 @@ import { db, guildConfig } from '../storage.js';
 
 const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+function newId(prefix) {
+  return `${prefix}-${Date.now().toString(36)}`;
+}
+
 export const commandHandlers = {
   async admin(interaction) {
     const action = interaction.options.getSubcommand();
@@ -21,7 +25,7 @@ export const commandHandlers = {
 
     if (action === 'open') {
       db.data.tickets.push({
-        id: `T-${Date.now()}`,
+        id: newId('T'),
         guildId: interaction.guildId,
         userId: interaction.user.id,
         createdAt: new Date().toISOString(),
@@ -40,11 +44,13 @@ export const commandHandlers = {
 
     if (action === 'start') {
       db.data.applications.push({
-        id: `A-${Date.now()}`,
+        id: newId('A'),
         guildId: interaction.guildId,
         userId: interaction.user.id,
+        applicantTag: interaction.user.tag,
         answers: [],
-        status: 'pending'
+        status: 'pending',
+        source: 'discord'
       });
       await db.write();
       await interaction.reply({ content: '📝 Application started. Check your DMs for questions (hook up modal/DM flow).', ephemeral: true });
@@ -121,5 +127,103 @@ export const commandHandlers = {
 
     await db.write();
     await interaction.reply({ content: '⚙️ Server configuration updated.', ephemeral: true });
+  },
+
+  async notify(interaction) {
+    const action = interaction.options.getSubcommand();
+
+    if (action === 'list') {
+      const feeds = db.data.notifications.filter((n) => n.guildId === interaction.guildId);
+      if (!feeds.length) {
+        await interaction.reply({ content: '📡 No YouTube/Twitch feeds configured yet.', ephemeral: true });
+        return;
+      }
+
+      const lines = feeds.map((n) => `• [${n.platform}] ${n.source} -> <#${n.discordChannelId}>`);
+      await interaction.reply({ content: `📡 Configured feeds:\n${lines.join('\n')}`, ephemeral: true });
+      return;
+    }
+
+    const platform = interaction.options.getString('platform');
+    const source = interaction.options.getString('source').trim().toLowerCase();
+
+    if (action === 'add') {
+      const discordChannelId = interaction.options.getChannel('channel')?.id;
+      db.data.notifications.push({
+        id: newId('N'),
+        guildId: interaction.guildId,
+        platform,
+        source,
+        discordChannelId,
+        enabled: true,
+        createdBy: interaction.user.id,
+        createdAt: new Date().toISOString()
+      });
+      await db.write();
+      await interaction.reply({ content: `✅ Added ${platform} feed \`${source}\` to <#${discordChannelId}>.`, ephemeral: true });
+      return;
+    }
+
+    const before = db.data.notifications.length;
+    db.data.notifications = db.data.notifications.filter((n) => !(n.guildId === interaction.guildId && n.platform === platform && n.source === source));
+    await db.write();
+    const removed = before - db.data.notifications.length;
+    await interaction.reply({ content: removed ? `🗑️ Removed ${removed} feed(s).` : 'No matching feed found.', ephemeral: true });
+  },
+
+  async cad(interaction) {
+    const action = interaction.options.getSubcommand();
+
+    if (action === 'create') {
+      const call = {
+        id: newId('CAD'),
+        guildId: interaction.guildId,
+        title: interaction.options.getString('title'),
+        location: interaction.options.getString('location'),
+        priority: interaction.options.getString('priority'),
+        status: 'new',
+        notes: [],
+        createdAt: new Date().toISOString(),
+        createdBy: interaction.user.id
+      };
+      db.data.cadCalls.push(call);
+      await db.write();
+      await interaction.reply(`🚓 CAD call created: **${call.id}** | ${call.title} @ ${call.location} [${call.priority}]`);
+      return;
+    }
+
+    if (action === 'list') {
+      const active = db.data.cadCalls.filter((c) => c.guildId === interaction.guildId && c.status !== 'closed');
+      if (!active.length) {
+        await interaction.reply({ content: '🗂️ No active CAD calls.', ephemeral: true });
+        return;
+      }
+
+      const lines = active.slice(0, 10).map((c) => `• ${c.id} | ${c.title} | ${c.status} | ${c.location}`);
+      await interaction.reply({ content: `🗂️ Active CAD calls:\n${lines.join('\n')}`, ephemeral: true });
+      return;
+    }
+
+    const id = interaction.options.getString('id');
+    const call = db.data.cadCalls.find((c) => c.id === id && c.guildId === interaction.guildId);
+
+    if (!call) {
+      await interaction.reply({ content: '❌ CAD call not found.', ephemeral: true });
+      return;
+    }
+
+    if (action === 'status') {
+      call.status = interaction.options.getString('status');
+      call.updatedAt = new Date().toISOString();
+      await db.write();
+      await interaction.reply({ content: `✅ ${id} updated to status **${call.status}**.` });
+      return;
+    }
+
+    const note = interaction.options.getString('note');
+    call.notes.push({ by: interaction.user.id, text: note, at: new Date().toISOString() });
+    call.updatedAt = new Date().toISOString();
+    await db.write();
+    await interaction.reply({ content: `📝 Note added to ${id}.`, ephemeral: true });
   }
 };
