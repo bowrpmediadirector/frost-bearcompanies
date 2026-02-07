@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BOWPR & Purple Paws Dashboard</title>
+    <style>
+      body { font-family: Inter, Arial, sans-serif; margin: 0; background: #0f1226; color: #fff; }
+      header { padding: 20px; background: #1b2147; }
+      main { padding: 20px; display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+      .card { background: #21295c; border-radius: 10px; padding: 16px; }
+      .value { font-size: 1.7rem; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>BOWPR + Purple Paws Bot Dashboard</h1>
+      <p>Live snapshot of tickets, applications, and reminders.</p>
+    </header>
+    <main>
+      <section class="card"><div>Tickets</div><div id="tickets" class="value">-</div></section>
+      <section class="card"><div>Applications</div><div id="applications" class="value">-</div></section>
+      <section class="card"><div>Reminders</div><div id="reminders" class="value">-</div></section>
+      <section class="card"><div>Guilds Configured</div><div id="guilds" class="value">-</div></section>
+    </main>
+
+    <script>
+      fetch('/api/stats')
+        .then((res) => res.json())
+        .then((stats) => {
+          for (const [key, value] of Object.entries(stats)) {
+            const el = document.getElementById(key);
+            if (el) el.textContent = value;
+          }
+        });
+    </script>
+  </body>
+</html>
